@@ -1,3 +1,4 @@
+import 'package:blue_thermal_printer/blue_thermal_printer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -5,6 +6,9 @@ import 'package:pos_amazink/utils/amazink_database.dart';
 import 'dart:math' as math;
 
 import 'package:expansion_widget/expansion_widget.dart';
+
+import '../utils/setting_shared_preferences.dart';
+import '../utils/text_utils.dart';
 
 class ReportPage extends StatefulWidget {
   const ReportPage({super.key});
@@ -17,6 +21,9 @@ class _ReportPageState extends State<ReportPage> {
   List<Order> orders = [];
   int total = 0;
   DateTime? selectedDate;
+
+  BlueThermalPrinter printer = BlueThermalPrinter.instance;
+
   @override
   void initState() {
     super.initState();
@@ -59,7 +66,7 @@ class _ReportPageState extends State<ReportPage> {
               InkWell(
                 child: RichText(
                   text: TextSpan(
-                    style: Theme.of(context).textTheme.subtitle1!.copyWith(
+                    style: Theme.of(context).textTheme.titleMedium!.copyWith(
                         letterSpacing: 1, fontWeight: FontWeight.bold),
                     children: const <TextSpan>[
                       TextSpan(
@@ -76,7 +83,7 @@ class _ReportPageState extends State<ReportPage> {
                 text: TextSpan(
                   style: Theme.of(context)
                       .textTheme
-                      .subtitle1!
+                      .titleMedium!
                       .copyWith(letterSpacing: 1, fontWeight: FontWeight.bold),
                   children: const <TextSpan>[
                     TextSpan(text: 'POS', style: TextStyle(color: Colors.red)),
@@ -130,16 +137,16 @@ class _ReportPageState extends State<ReportPage> {
                     ? 'Pilih Tanggal'
                     : '${selectedDate!.day}-${selectedDate!.month}-${selectedDate!.year}'),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('No.'),
-                    const Text('Waktu Order'),
-                    const Text('Bayar'),
+                    Text('No.'),
+                    Text('Waktu Order'),
+                    Text('Bayar'),
                     Row(
-                      children: const [
+                      children: [
                         Text('Total'),
                         SizedBox(
                           width: 16,
@@ -199,45 +206,123 @@ class _ReportPageState extends State<ReportPage> {
                             builder: (context, snapshot) {
                               return snapshot.hasData
                                   ? Column(
-                                      children: snapshot.data!
-                                          .map(
-                                            (e) => Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.start,
-                                              children: [
-                                                const SizedBox(
-                                                  width: 16,
-                                                ),
-                                                SizedBox(
-                                                    width: 200,
-                                                    child:
-                                                        Text(e.product_name)),
-                                                const SizedBox(
-                                                  width: 16,
-                                                ),
-                                                SizedBox(
-                                                    width: 40,
-                                                    child: Text(e.qty)),
-                                                const SizedBox(
-                                                  width: 16,
-                                                ),
-                                                SizedBox(
-                                                    width: 60,
-                                                    child: Text(e.price)),
-                                                const SizedBox(
-                                                  width: 16,
-                                                ),
-                                                SizedBox(
-                                                  width: 100,
-                                                  child: Text((int.parse(
-                                                              e.qty) *
-                                                          int.parse(e.price))
-                                                      .toString()),
-                                                ),
-                                              ],
-                                            ),
-                                          )
-                                          .toList(),
+                                      children: [
+                                        ...snapshot.data!
+                                            .map(
+                                              (e) => Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                children: [
+                                                  const SizedBox(
+                                                    width: 16,
+                                                  ),
+                                                  SizedBox(
+                                                      width: 200,
+                                                      child:
+                                                          Text(e.product_name)),
+                                                  const SizedBox(
+                                                    width: 16,
+                                                  ),
+                                                  SizedBox(
+                                                      width: 40,
+                                                      child: Text(e.qty)),
+                                                  const SizedBox(
+                                                    width: 16,
+                                                  ),
+                                                  SizedBox(
+                                                      width: 60,
+                                                      child: Text(e.price)),
+                                                  const SizedBox(
+                                                    width: 16,
+                                                  ),
+                                                  SizedBox(
+                                                    width: 100,
+                                                    child: Text((int.parse(
+                                                                e.qty) *
+                                                            int.parse(e.price))
+                                                        .toString()),
+                                                  ),
+                                                ],
+                                              ),
+                                            )
+                                            .toList(),
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            int totalPrice =
+                                                int.parse(orders[index].total);
+                                            double totalPajak =
+                                                ((totalPrice).toDouble() * 10) /
+                                                    100;
+                                            String bayar = orders[index].pay;
+
+                                            printer.printCustom(
+                                                SettingSharedPreferences
+                                                        .getNamaWarung() ??
+                                                    '',
+                                                2,
+                                                1);
+                                            printer.printCustom(
+                                                SettingSharedPreferences
+                                                        .getAlamatWarung() ??
+                                                    '',
+                                                0,
+                                                1);
+                                            printer.printCustom(
+                                                'Date : ${DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now())}',
+                                                0,
+                                                1);
+                                            printer.printCustom(
+                                                '==============================',
+                                                0,
+                                                1);
+                                            for (var order in snapshot.data!) {
+                                              printer.printCustom(
+                                                  order.product_name, 0, 0);
+                                              printer.printLeftRight(
+                                                  '${order.qty} x ${getThousandSeparator(order.price.toString())}',
+                                                  getThousandSeparator(
+                                                      (int.parse(order.price) *
+                                                              int.parse(
+                                                                  order.qty))
+                                                          .toString()),
+                                                  0);
+                                            }
+                                            printer.printNewLine();
+                                            printer.printCustom(
+                                                '................................',
+                                                0,
+                                                1);
+                                            printer.printLeftRight(
+                                                'Sub Total',
+                                                'Rp ${getCurrencySeparator(totalPrice.toString())}',
+                                                0);
+                                            printer.printLeftRight(
+                                                'Pajak',
+                                                'Rp ${getCurrencySeparator(totalPajak.toString())}',
+                                                0);
+                                            printer.printLeftRight(
+                                                'Total',
+                                                'Rp ${getCurrencySeparator((totalPrice + totalPajak).toString())}',
+                                                0);
+                                            printer.printLeftRight(
+                                                'Bayar',
+                                                'Rp ${getCurrencySeparator(bayar.toString())}',
+                                                0);
+                                            printer.printLeftRight(
+                                                'Kembalian',
+                                                'Rp ${getCurrencySeparator((int.parse(bayar) - (totalPrice + totalPajak)).toString())}',
+                                                0);
+                                            printer.printNewLine();
+                                            printer.printCustom(
+                                                'Terima Kasih', 1, 1);
+                                            printer.paperCut();
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.red,
+                                          ),
+                                          child: const Text('Print Note'),
+                                        ),
+                                      ],
                                     )
                                   : const Center(
                                       child: CircularProgressIndicator(),
