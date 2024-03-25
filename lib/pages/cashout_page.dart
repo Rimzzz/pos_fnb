@@ -25,18 +25,12 @@ class _CashoutPageState extends State<CashoutPage> {
   final nominalController = TextEditingController();
   int total = 0;
   DateTime? selectedDate;
-  Rekening selected = Rekening(
-      rekening_code: '410100061', rekening_name: 'Belanja bahan baku makanan');
+  Rekening selected =
+      Rekening(rekening_code: '410100050', rekening_name: 'HPP Makanan');
   List<Rekening> rekeningList = [
-    Rekening(
-        rekening_code: '410100061',
-        rekening_name: 'Belanja bahan baku makanan'),
-    Rekening(
-        rekening_code: '410100062',
-        rekening_name: 'Belanja bahan baku minuman'),
-    Rekening(
-        rekening_code: '410100063', rekening_name: 'Belanja bahan baku snack'),
-    Rekening(rekening_code: '110510001', rekening_name: 'Kas bon'),
+    Rekening(rekening_code: '510800002', rekening_name: 'HPP Makanan'),
+    Rekening(rekening_code: '510200005', rekening_name: 'Biaya Perlengkapan'),
+    Rekening(rekening_code: '510200003', rekening_name: 'Biaya Konsumsi'),
   ];
 
   @override

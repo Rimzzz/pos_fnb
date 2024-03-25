@@ -220,9 +220,9 @@ class AmazinkDatabase {
     final db = await instance.database;
     final result = await db.query(
       tableOrder,
-      where: 'is_updated = ?',
-      whereArgs: [0],
-      orderBy: 'id desc',
+      // where: 'is_updated = ?',
+      // whereArgs: [0],
+      orderBy: 'id asc',
     );
 
     return result.map((e) => Order.fromMap(e)).toList();
@@ -399,12 +399,14 @@ class Order {
   String total;
   String transactionTime;
   String transactionDate;
+  String isUpdated;
   Order({
     required this.id,
     required this.pay,
     required this.total,
     required this.transactionTime,
     required this.transactionDate,
+    required this.isUpdated,
   });
 
   Map<String, dynamic> toMap() {
@@ -414,6 +416,7 @@ class Order {
       'total': total,
       'transactionTime': transactionTime,
       'transactionDate': transactionDate,
+      'isUpdated': isUpdated,
     };
   }
 
@@ -424,6 +427,7 @@ class Order {
       total: map['total'] ?? '',
       transactionTime: map['transaction_time'] ?? '',
       transactionDate: map['transaction_date'] ?? '',
+      isUpdated: map['is_updated'] ?? '0',
     );
   }
 

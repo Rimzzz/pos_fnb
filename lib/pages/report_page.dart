@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:blue_thermal_printer/blue_thermal_printer.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -34,6 +37,17 @@ class _ReportPageState extends State<ReportPage> {
           total += int.parse(o.total);
         }
       });
+    });
+  }
+
+  Future<void> reloadData() async {
+    List<Order> updatedOrders = await AmazinkDatabase.instance.readAllOrder();
+    setState(() {
+      orders = updatedOrders;
+      total = 0;
+      for (final o in orders) {
+        total += int.parse(o.total);
+      }
     });
   }
 
@@ -103,7 +117,7 @@ class _ReportPageState extends State<ReportPage> {
               ),
               Text(selectedDate != null
                   ? 'Saldo ${selectedDate!.day}-${selectedDate!.month}-${selectedDate!.year} : $total'
-                  : 'Saldo Saat Ini : $total'),
+                  : 'Saldo Saat Ini : ${getThousandSeparator(total.toString())}'),
               const SizedBox(
                 height: 16,
               ),
@@ -153,6 +167,7 @@ class _ReportPageState extends State<ReportPage> {
                         ),
                       ],
                     ),
+                    Text('Status'),
                   ],
                 ),
               ),
@@ -182,8 +197,16 @@ class _ReportPageState extends State<ReportPage> {
                                         children: [
                                           Text('${index + 1}.'),
                                           Text(orders[index].transactionTime),
-                                          Text(orders[index].pay),
-                                          Text(orders[index].total),
+                                          Text(getThousandSeparator(
+                                              orders[index].pay)),
+                                          Text(getThousandSeparator(
+                                              orders[index].total)),
+                                          Text(orders[index]
+                                                      .isUpdated
+                                                      .toString() ==
+                                                  '1'
+                                              ? 'Terupload'
+                                              : 'Belum Diupload'),
                                         ],
                                       ),
                                     ),
@@ -246,82 +269,163 @@ class _ReportPageState extends State<ReportPage> {
                                               ),
                                             )
                                             .toList(),
-                                        ElevatedButton(
-                                          onPressed: () {
-                                            int totalPrice =
-                                                int.parse(orders[index].total);
-                                            double totalPajak =
-                                                ((totalPrice).toDouble() * 10) /
-                                                    100;
-                                            String bayar = orders[index].pay;
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            ElevatedButton(
+                                              onPressed: () {
+                                                int totalPrice = int.parse(
+                                                    orders[index].total);
+                                                double totalPajak =
+                                                    ((totalPrice).toDouble() *
+                                                            10) /
+                                                        100;
+                                                String bayar =
+                                                    orders[index].pay;
 
-                                            printer.printCustom(
-                                                SettingSharedPreferences
-                                                        .getNamaWarung() ??
-                                                    '',
-                                                2,
-                                                1);
-                                            printer.printCustom(
-                                                SettingSharedPreferences
-                                                        .getAlamatWarung() ??
-                                                    '',
-                                                0,
-                                                1);
-                                            printer.printCustom(
-                                                'Date : ${DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now())}',
-                                                0,
-                                                1);
-                                            printer.printCustom(
-                                                '==============================',
-                                                0,
-                                                1);
-                                            for (var order in snapshot.data!) {
-                                              printer.printCustom(
-                                                  order.product_name, 0, 0);
-                                              printer.printLeftRight(
-                                                  '${order.qty} x ${getThousandSeparator(order.price.toString())}',
-                                                  getThousandSeparator(
-                                                      (int.parse(order.price) *
+                                                printer.printCustom(
+                                                    SettingSharedPreferences
+                                                            .getNamaWarung() ??
+                                                        '',
+                                                    2,
+                                                    1);
+                                                printer.printCustom(
+                                                    SettingSharedPreferences
+                                                            .getAlamatWarung() ??
+                                                        '',
+                                                    0,
+                                                    1);
+                                                printer.printCustom(
+                                                    'Date : ${DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now())}',
+                                                    0,
+                                                    1);
+                                                printer.printCustom(
+                                                    '==============================',
+                                                    0,
+                                                    1);
+                                                for (var order
+                                                    in snapshot.data!) {
+                                                  printer.printCustom(
+                                                      order.product_name, 0, 0);
+                                                  printer.printLeftRight(
+                                                      '${order.qty} x ${getThousandSeparator(order.price.toString())}',
+                                                      getThousandSeparator((int
+                                                                  .parse(order
+                                                                      .price) *
                                                               int.parse(
                                                                   order.qty))
                                                           .toString()),
-                                                  0);
-                                            }
-                                            printer.printNewLine();
-                                            printer.printCustom(
-                                                '................................',
-                                                0,
-                                                1);
-                                            printer.printLeftRight(
-                                                'Sub Total',
-                                                'Rp ${getCurrencySeparator(totalPrice.toString())}',
-                                                0);
-                                            printer.printLeftRight(
-                                                'Pajak',
-                                                'Rp ${getCurrencySeparator(totalPajak.toString())}',
-                                                0);
-                                            printer.printLeftRight(
-                                                'Total',
-                                                'Rp ${getCurrencySeparator((totalPrice + totalPajak).toString())}',
-                                                0);
-                                            printer.printLeftRight(
-                                                'Bayar',
-                                                'Rp ${getCurrencySeparator(bayar.toString())}',
-                                                0);
-                                            printer.printLeftRight(
-                                                'Kembalian',
-                                                'Rp ${getCurrencySeparator((int.parse(bayar) - (totalPrice + totalPajak)).toString())}',
-                                                0);
-                                            printer.printNewLine();
-                                            printer.printCustom(
-                                                'Terima Kasih', 1, 1);
-                                            printer.paperCut();
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.red,
-                                          ),
-                                          child: const Text('Print Note'),
-                                        ),
+                                                      0);
+                                                }
+                                                printer.printNewLine();
+                                                printer.printCustom(
+                                                    '................................',
+                                                    0,
+                                                    1);
+                                                printer.printLeftRight(
+                                                    'Sub Total',
+                                                    'Rp ${getCurrencySeparator(totalPrice.toString())}',
+                                                    0);
+                                                printer.printLeftRight(
+                                                    'Pajak',
+                                                    'Rp ${getCurrencySeparator(totalPajak.toString())}',
+                                                    0);
+                                                printer.printLeftRight(
+                                                    'Total',
+                                                    'Rp ${getCurrencySeparator((totalPrice + totalPajak).toString())}',
+                                                    0);
+                                                printer.printLeftRight(
+                                                    'Bayar',
+                                                    'Rp ${getCurrencySeparator(bayar.toString())}',
+                                                    0);
+                                                printer.printLeftRight(
+                                                    'Kembalian',
+                                                    'Rp ${getCurrencySeparator((int.parse(bayar) - (totalPrice + totalPajak)).toString())}',
+                                                    0);
+                                                printer.printNewLine();
+                                                printer.printCustom(
+                                                    'Terima Kasih', 1, 1);
+                                                printer.paperCut();
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.red,
+                                              ),
+                                              child: const Text('Print Note'),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            ElevatedButton(
+                                              onPressed: () async {
+                                                var dio = Dio();
+                                                String urlServer =
+                                                    SettingSharedPreferences
+                                                            .getUrlServer() ??
+                                                        '';
+                                                List<Map<String, dynamic>>
+                                                    dataToSend = [];
+                                                List<Map<String, dynamic>>
+                                                    productData = [];
+
+                                                for (var order
+                                                    in snapshot.data!) {
+                                                  productData.add({
+                                                    'produk_id':
+                                                        order.product_id,
+                                                    'qty': order.qty,
+                                                    'price': order.price,
+                                                  });
+                                                }
+
+                                                Map<String, dynamic>
+                                                    transactionData = {
+                                                  'id': orders[index].id,
+                                                  'tanggal': orders[index]
+                                                      .transactionTime
+                                                      .toString(),
+                                                  'nilai': orders[index].total,
+                                                  'bayar': orders[index].pay,
+                                                  'produk': productData,
+                                                };
+                                                dataToSend.add(transactionData);
+                                                try {
+                                                  Response response =
+                                                      await dio.post(
+                                                    '$urlServer/publish/addTransaction',
+                                                    data: {'head': dataToSend},
+                                                  );
+                                                  if (response.statusCode ==
+                                                      200) {
+                                                    var responseData = json
+                                                        .decode(response.data);
+                                                    var code =
+                                                        responseData['code'];
+                                                    var updateData =
+                                                        responseData['update'];
+                                                    if (code == 201) {
+                                                      for (var updateItem
+                                                          in updateData) {
+                                                        var posId = updateItem[
+                                                            'pos_id'];
+                                                        AmazinkDatabase.instance
+                                                            .updateOrder(posId);
+                                                      }
+                                                      showSnack(context,
+                                                          'Transaksi berhasil kirim ke server');
+                                                      await reloadData();
+                                                    }
+                                                  }
+                                                } catch (error) {
+                                                  showSnack(context,
+                                                      'Error sending data to server: $error');
+                                                }
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.blue,
+                                              ),
+                                              child: const Text('Kirim Server'),
+                                            ),
+                                          ],
+                                        )
                                       ],
                                     )
                                   : const Center(

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:animation_wrappers/animation_wrappers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -586,7 +587,7 @@ class _HomePageState extends State<HomePage> {
                                                                     ),
                                                                     Padding(
                                                                       padding: const EdgeInsets
-                                                                              .symmetric(
+                                                                          .symmetric(
                                                                           horizontal:
                                                                               8),
                                                                       child:
@@ -610,7 +611,7 @@ class _HomePageState extends State<HomePage> {
                                                                     ),
                                                                     Padding(
                                                                       padding: const EdgeInsets
-                                                                              .symmetric(
+                                                                          .symmetric(
                                                                           horizontal:
                                                                               8),
                                                                       child:
@@ -634,7 +635,7 @@ class _HomePageState extends State<HomePage> {
                                                                     ),
                                                                     Padding(
                                                                       padding: const EdgeInsets
-                                                                              .symmetric(
+                                                                          .symmetric(
                                                                           horizontal:
                                                                               8),
                                                                       child:
@@ -658,7 +659,7 @@ class _HomePageState extends State<HomePage> {
                                                                     ),
                                                                     Padding(
                                                                       padding: const EdgeInsets
-                                                                              .symmetric(
+                                                                          .symmetric(
                                                                           horizontal:
                                                                               8),
                                                                       child:
@@ -683,7 +684,7 @@ class _HomePageState extends State<HomePage> {
                                                                     ),
                                                                     Padding(
                                                                       padding: const EdgeInsets
-                                                                              .symmetric(
+                                                                          .symmetric(
                                                                           horizontal:
                                                                               8),
                                                                       child:
@@ -707,7 +708,7 @@ class _HomePageState extends State<HomePage> {
                                                                     ),
                                                                     Padding(
                                                                       padding: const EdgeInsets
-                                                                              .symmetric(
+                                                                          .symmetric(
                                                                           horizontal:
                                                                               5),
                                                                       child:
@@ -1170,7 +1171,7 @@ class _HomePageState extends State<HomePage> {
                   }));
                 },
                 margin: const EdgeInsets.only(left: 10),
-                title: const Text('KAS KELUAR'),
+                title: const Text('Kas Keluar'),
                 bgColor: Colors.red,
               )
             ],
@@ -1489,37 +1490,57 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> sentToServer() async {
     List<Order> orders = await AmazinkDatabase.instance.readAllOrder();
+
+    var dio = Dio();
+    String urlServer = SettingSharedPreferences.getUrlServer() ?? '';
+
+    List<Map<String, dynamic>> dataToSend = [];
+
     for (final item in orders) {
       List<OrderDetail> details =
           await AmazinkDatabase.instance.readAllOrderDetail(item.id);
-      List detailOrder = [];
+      List<Map<String, dynamic>> productData = [];
+
       for (final detail in details) {
-        detailOrder.add(
-          {
-            'produk_id': detail.product_id,
-            'qty': detail.qty,
-            'price': detail.price,
-            'subtotal':
-                (int.parse(detail.price) * int.parse(detail.qty)).toString(),
-          },
-        );
+        productData.add({
+          'produk_id': detail.product_id,
+          'qty': detail.qty,
+          'price': detail.price,
+        });
       }
-      Response response;
-      var dio = Dio();
-      String urlServer = SettingSharedPreferences.getUrlServer() ?? '';
+
+      Map<String, dynamic> transactionData = {
+        'id': item.id,
+        'tanggal': item.transactionTime.toString(),
+        'nilai': item.total,
+        'bayar': item.pay,
+        'produk': productData,
+      };
+
+      dataToSend.add(transactionData);
+    }
+
+    Response response;
+
+    try {
       response = await dio.post(
         '$urlServer/publish/addTransaction',
-        data: {
-          'id': item.id,
-          'tanggal': item.transactionTime.toString(),
-          'nilai': item.total,
-          'bayar': item.pay,
-          'detail': detailOrder,
-        },
+        data: {'head': dataToSend},
       );
+
       if (response.statusCode == 200) {
-        AmazinkDatabase.instance.updateOrder(item.id);
+        var responseData = json.decode(response.data);
+        var code = responseData['code'];
+        var updateData = responseData['update'];
+        if (code == 201) {
+          for (var updateItem in updateData) {
+            var posId = updateItem['pos_id'];
+            AmazinkDatabase.instance.updateOrder(posId);
+          }
+        }
       }
+    } catch (error) {
+      showSnack(context, 'Error sending data to server: $error');
     }
   }
 }
