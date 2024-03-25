@@ -277,10 +277,6 @@ class _ReportPageState extends State<ReportPage> {
                                               onPressed: () {
                                                 int totalPrice = int.parse(
                                                     orders[index].total);
-                                                double totalPajak =
-                                                    ((totalPrice).toDouble() *
-                                                            10) /
-                                                        100;
                                                 String bayar =
                                                     orders[index].pay;
 
@@ -327,13 +323,10 @@ class _ReportPageState extends State<ReportPage> {
                                                     'Sub Total',
                                                     'Rp ${getCurrencySeparator(totalPrice.toString())}',
                                                     0);
-                                                printer.printLeftRight(
-                                                    'Pajak',
-                                                    'Rp ${getCurrencySeparator(totalPajak.toString())}',
-                                                    0);
+
                                                 printer.printLeftRight(
                                                     'Total',
-                                                    'Rp ${getCurrencySeparator((totalPrice + totalPajak).toString())}',
+                                                    'Rp ${getCurrencySeparator((totalPrice).toString())}',
                                                     0);
                                                 printer.printLeftRight(
                                                     'Bayar',
@@ -341,7 +334,7 @@ class _ReportPageState extends State<ReportPage> {
                                                     0);
                                                 printer.printLeftRight(
                                                     'Kembalian',
-                                                    'Rp ${getCurrencySeparator((int.parse(bayar) - (totalPrice + totalPajak)).toString())}',
+                                                    'Rp ${getCurrencySeparator((int.parse(bayar) - (totalPrice)).toString())}',
                                                     0);
                                                 printer.printNewLine();
                                                 printer.printCustom(

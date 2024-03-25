@@ -391,13 +391,13 @@ class _HomePageState extends State<HomePage> {
                             children: [
                               ListTile(
                                 tileColor: Theme.of(context).backgroundColor,
-                                title: Text('Total+Pajak:',
+                                title: Text('Total:',
                                     style: Theme.of(context)
                                         .textTheme
                                         .subtitle1!
                                         .copyWith(fontSize: 15)),
                                 trailing: Text(
-                                  'Rp ${getCurrencySeparator((totalPrice + totalPajak).toString())} (${getCurrencySeparator((totalPrice).toString())}+${getCurrencySeparator((totalPajak).toString())})',
+                                  'Rp ${getCurrencySeparator((totalPrice).toString())}',
                                   style: Theme.of(context)
                                       .textTheme
                                       .subtitle1
@@ -609,23 +609,6 @@ class _HomePageState extends State<HomePage> {
                                                                     const SizedBox(
                                                                       height: 8,
                                                                     ),
-                                                                    Padding(
-                                                                      padding: const EdgeInsets
-                                                                          .symmetric(
-                                                                          horizontal:
-                                                                              8),
-                                                                      child:
-                                                                          Row(
-                                                                        mainAxisAlignment:
-                                                                            MainAxisAlignment.spaceBetween,
-                                                                        children: [
-                                                                          const Text(
-                                                                              'Pajak'),
-                                                                          Text(getCurrencySeparator(
-                                                                              totalPajak.toString())),
-                                                                        ],
-                                                                      ),
-                                                                    ),
                                                                     const Divider(
                                                                       thickness:
                                                                           1,
@@ -646,7 +629,7 @@ class _HomePageState extends State<HomePage> {
                                                                           const Text(
                                                                               'Total'),
                                                                           Text(getCurrencySeparator(
-                                                                              (totalPrice + totalPajak).toString())),
+                                                                              (totalPrice).toString())),
                                                                         ],
                                                                       ),
                                                                     ),
@@ -695,7 +678,7 @@ class _HomePageState extends State<HomePage> {
                                                                           const Text(
                                                                               'Kembalian'),
                                                                           Text(getCurrencySeparator(
-                                                                              (int.parse(bayarController.text) - (totalPrice + totalPajak)).toString())),
+                                                                              (int.parse(bayarController.text) - (totalPrice)).toString())),
                                                                         ],
                                                                       ),
                                                                     ),
@@ -755,10 +738,9 @@ class _HomePageState extends State<HomePage> {
                                                                               printer.printNewLine();
                                                                               printer.printCustom('................................', 0, 1);
                                                                               printer.printLeftRight('Sub Total', 'Rp ${getCurrencySeparator(totalPrice.toString())}', 0);
-                                                                              printer.printLeftRight('Pajak', 'Rp ${getCurrencySeparator(totalPajak.toString())}', 0);
-                                                                              printer.printLeftRight('Total', 'Rp ${getCurrencySeparator((totalPrice + totalPajak).toString())}', 0);
+                                                                              printer.printLeftRight('Total', 'Rp ${getCurrencySeparator((totalPrice).toString())}', 0);
                                                                               printer.printLeftRight('Bayar', 'Rp ${getCurrencySeparator(bayarController.text.toString())}', 0);
-                                                                              printer.printLeftRight('Kembalian', 'Rp ${getCurrencySeparator((int.parse(bayarController.text) - (totalPrice + totalPajak)).toString())}', 0);
+                                                                              printer.printLeftRight('Kembalian', 'Rp ${getCurrencySeparator((int.parse(bayarController.text) - (totalPrice)).toString())}', 0);
                                                                               printer.printNewLine();
                                                                               printer.printCustom('Terima Kasih', 1, 1);
                                                                               printer.paperCut();
